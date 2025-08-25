@@ -19,56 +19,70 @@ class _OrdersPageState extends State<OrdersPage> {
   }
 
   Widget statusIcon(String status) {
-    if (status == "PAID") {
-      return statusContainer(
-        text: "PAID",
-        bgColor: Colors.lightGreen,
-        textColor: Colors.white,
-      );
-    }
-    if (status == "ON_THE_WAY") {
-      return statusContainer(
-        text: "ON THE WAY",
-        bgColor: Colors.yellow,
-        textColor: Colors.black,
-      );
-    } else if (status == "DELIVERED") {
-      return statusContainer(
-        text: "DELIVERED",
-        bgColor: Colors.green.shade700,
-        textColor: Colors.white,
-      );
-    } else {
-      return statusContainer(
-        text: "CANCELED",
-        bgColor: Colors.red,
-        textColor: Colors.white,
-      );
-    }
-  }
+    Color bgColor;
+    Color textColor;
+    IconData icon;
+    String displayText;
 
-  Widget statusContainer({
-    required String text,
-    required Color bgColor,
-    required Color textColor,
-  }) {
+    switch (status) {
+      case "PAID":
+        bgColor = const Color(0xFF059669);
+        textColor = Colors.white;
+        icon = Icons.payment;
+        displayText = "PAID";
+        break;
+      case "ON_THE_WAY":
+        bgColor = const Color(0xFFF59E0B);
+        textColor = Colors.white;
+        icon = Icons.local_shipping;
+        displayText = "SHIPPED";
+        break;
+      case "DELIVERED":
+        bgColor = const Color(0xFF10B981);
+        textColor = Colors.white;
+        icon = Icons.check_circle;
+        displayText = "DELIVERED";
+        break;
+      default:
+        bgColor = const Color(0xFFEF4444);
+        textColor = Colors.white;
+        icon = Icons.cancel;
+        displayText = "CANCELLED";
+        break;
+    }
+
     return Container(
-      child: Text(text, style: TextStyle(color: textColor)),
-      color: bgColor,
-      padding: EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            displayText,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text(
-          "Orders",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-        ),
-        scrolledUnderElevation: 0,
-        forceMaterialTransparency: true,
+        title: const Text("Orders"),
+        backgroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Consumer<AdminProvider>(
         builder: (context, value, child) {
@@ -76,24 +90,108 @@ class _OrdersPageState extends State<OrdersPage> {
               OrdersModel.fromJsonList(value.orders) as List<OrdersModel>;
 
           if (orders.isEmpty) {
-            return Center(child: Text("No orders found"));
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 64,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    "No Orders Found",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "Orders will appear here once customers start purchasing",
+                    style: TextStyle(
+                      color: Color(0xFF94A3B8),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
           } else {
             return ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: orders.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      "/view_order",
-                      arguments: orders[index],
-                    );
-                  },
-                  title: Text("Order by ${orders[index].name} "),
-                  subtitle: Text(
-                    "Ordered on ${DateTime.fromMillisecondsSinceEpoch(orders[index].created_at).toString()}",
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  trailing: statusIcon(orders[index].status),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        "/view_order",
+                        arguments: orders[index],
+                      );
+                    },
+                    leading: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.shopping_bag_outlined,
+                        color: Color(0xFF6366F1),
+                      ),
+                    ),
+                    title: Text(
+                      "Order by ${orders[index].name}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(
+                          "₹${orders[index].total}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF059669),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateTime.fromMillisecondsSinceEpoch(orders[index].created_at)
+                              .toString()
+                              .split('.')[0],
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: statusIcon(orders[index].status),
+                  ),
                 );
               },
             );

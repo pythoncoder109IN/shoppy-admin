@@ -21,7 +21,12 @@ class _CategoriesPageState extends State<CategoriesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Categories")),
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: const Text("Categories"),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: Consumer<AdminProvider>(
         builder: (context, value, child) {
           List<CategoriesModel> categories = CategoriesModel.fromJsonList(
@@ -29,91 +34,158 @@ class _CategoriesPageState extends State<CategoriesPage> {
           );
 
           if (value.categories.isEmpty) {
-            return Center(child: Text("No Categories Found"));
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.category_outlined,
+                    size: 64,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    "No Categories Found",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "Add your first category to get started",
+                    style: TextStyle(
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(16),
             itemCount: value.categories.length,
             itemBuilder: (context, index) {
-              return ListTile(
-                leading: Container(
-                  height: 50,
-                  width: 50,
-                  child: Image.network(
-                    categories[index].image == null ||
-                            categories[index].image == ""
-                        ? "https://demofree.sirv.com/nope-not-here.jpg"
-                        : categories[index].image,
-                  ),
-                ),
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text("What you want to do"),
-                      content: Text("Delete action cannot be undone"),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            showDialog(
-                              context: context,
-                              builder: (context) => AdditionalConfirm(
-                                contentText:
-                                    "Are you sure you want to delete this",
-                                onYes: () {
-                                  DbService().deleteCategories(
-                                    docId: categories[index].id,
-                                  );
-                                  Navigator.pop(context);
-                                },
-                                onNo: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            );
-                          },
-                          child: Text("Delete Category"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            showDialog(
-                              context: context,
-                              builder: (context) => ModifyCategory(
-                                isUpdating: true,
-                                categoryId: categories[index].id,
-                                priority: categories[index].priority,
-                                image: categories[index].image,
-                                name: categories[index].name,
-                              ),
-                            );
-                          },
-                          child: Text("Update Category"),
-                        ),
-                      ],
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                  );
-                },
-                title: Text(
-                  categories[index].name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  ],
                 ),
-                subtitle: Text("Priority : ${categories[index].priority}"),
-                trailing: IconButton(
-                  icon: Icon(Icons.edit_outlined),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => ModifyCategory(
-                        isUpdating: true,
-                        categoryId: categories[index].id,
-                        priority: categories[index].priority,
-                        image: categories[index].image,
-                        name: categories[index].name,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16),
+                  leading: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: const Color(0xFFF1F5F9),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        categories[index].image.isEmpty
+                            ? "https://demofree.sirv.com/nope-not-here.jpg"
+                            : categories[index].image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.category_outlined,
+                            color: Color(0xFF94A3B8),
+                          );
+                        },
                       ),
-                    );
+                    ),
+                  ),
+                  title: Text(
+                    categories[index].name.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6366F1).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      "Priority: ${categories[index].priority}",
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF6366F1),
+                      ),
+                    ),
+                  ),
+                  trailing: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        showDialog(
+                          context: context,
+                          builder: (context) => ModifyCategory(
+                            isUpdating: true,
+                            categoryId: categories[index].id,
+                            priority: categories[index].priority,
+                            image: categories[index].image,
+                            name: categories[index].name,
+                          ),
+                        );
+                      } else if (value == 'delete') {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AdditionalConfirm(
+                            contentText: "Are you sure you want to delete this category?",
+                            onYes: () {
+                              DbService().deleteCategories(
+                                docId: categories[index].id,
+                              );
+                              Navigator.pop(context);
+                            },
+                            onNo: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        );
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 20),
+                            SizedBox(width: 12),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                            SizedBox(width: 12),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
                   },
                 ),
               );
@@ -129,7 +201,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                 ModifyCategory(isUpdating: false, categoryId: "", priority: 0),
           );
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
