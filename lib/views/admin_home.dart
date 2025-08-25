@@ -160,8 +160,13 @@ class _AdminHomeState extends State<AdminHome> {
             const SizedBox(height: 16),
 
             // Action buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 1.8,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
               children: [
                 HomeButton(
                   onTap: () {
@@ -175,11 +180,6 @@ class _AdminHomeState extends State<AdminHome> {
                   },
                   name: "Products",
                 ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
                 HomeButton(
                   onTap: () {
                     Navigator.pushNamed(
@@ -200,11 +200,6 @@ class _AdminHomeState extends State<AdminHome> {
                   },
                   name: "Banners",
                 ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
                 HomeButton(
                   onTap: () {
                     Navigator.pushNamed(context, "/category");

@@ -2,48 +2,49 @@ import 'dart:io';
 
 import 'package:ecommerce_admin_app/controllers/cloudinary_service.dart';
 import 'package:ecommerce_admin_app/controllers/db_service.dart';
-import 'package:ecommerce_admin_app/providers/admin_provider.dart';
+import 'package:ecommerce_admin_app/models/categories_model.dart';
 import 'package:ecommerce_admin_app/widgets/modern_button.dart';
 import 'package:ecommerce_admin_app/widgets/modern_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 
-class ModifyPromo extends StatefulWidget {
-  const ModifyPromo({super.key});
+class ModifyCategory extends StatefulWidget {
+  const ModifyCategory({super.key});
 
   @override
-  State<ModifyPromo> createState() => _ModifyPromoState();
+  State<ModifyCategory> createState() => _ModifyCategoryState();
 }
 
-class _ModifyPromoState extends State<ModifyPromo> {
-  late String productId = "";
+class _ModifyCategoryState extends State<ModifyCategory> {
   final formKey = GlobalKey<FormState>();
-  TextEditingController titleController = TextEditingController();
-  TextEditingController categoryController = TextEditingController();
-  TextEditingController imageController = TextEditingController();
   final ImagePicker picker = ImagePicker();
   late XFile? image = null;
+  TextEditingController categoryController = TextEditingController();
+  TextEditingController imageController = TextEditingController();
+  TextEditingController priorityController = TextEditingController();
   bool _isUploading = false;
-
-  bool _isInitialized = false;
-  bool _isPromo = true;
   
+  String categoryId = "";
+  bool isUpdating = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_isInitialized) {
-        final arguments = ModalRoute.of(context)?.settings.arguments;
-        if (arguments != null && arguments is Map<String, dynamic>) {
-          if (arguments["detail"] != null) {
-            setData(arguments["detail"]);
-          }
-          _isPromo = arguments['promo'] ?? true;
-        }
-        _isInitialized = true;
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      if (arguments != null && arguments is CategoriesModel) {
+        setData(arguments);
       }
     });
+  }
+
+  void setData(CategoriesModel category) {
+    categoryId = category.id;
+    isUpdating = true;
+    categoryController.text = category.name;
+    imageController.text = category.image;
+    priorityController.text = category.priority.toString();
+    setState(() {});
   }
 
   void _pickImageAndCloudinaryUpload() async {
@@ -79,24 +80,12 @@ class _ModifyPromoState extends State<ModifyPromo> {
     }
   }
 
-  setData(dynamic data) {
-    productId = data.id;
-    titleController.text = data.title;
-    categoryController.text = data.category;
-    imageController.text = data.image;
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text(
-          productId.isNotEmpty
-              ? _isPromo ? "Edit Promotion" : "Edit Banner"
-              : _isPromo ? "Create Promotion" : "Create Banner",
-        ),
+        title: Text(isUpdating ? "Edit Category" : "Add New Category"),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -113,18 +102,15 @@ class _ModifyPromoState extends State<ModifyPromo> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      _isPromo ? const Color(0xFF6366F1) : const Color(0xFF059669),
-                      _isPromo ? const Color(0xFF8B5CF6) : const Color(0xFF10B981),
-                    ],
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: (_isPromo ? const Color(0xFF6366F1) : const Color(0xFF059669)).withOpacity(0.3),
+                      color: const Color(0xFF6366F1).withOpacity(0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -138,15 +124,15 @@ class _ModifyPromoState extends State<ModifyPromo> {
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(
-                        _isPromo ? Icons.local_offer : Icons.image,
+                      child: const Icon(
+                        Icons.category,
                         color: Colors.white,
                         size: 32,
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      productId.isNotEmpty ? "Edit Content" : "Create New Content",
+                      isUpdating ? "Edit Category" : "Create New Category",
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
@@ -156,9 +142,9 @@ class _ModifyPromoState extends State<ModifyPromo> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _isPromo 
-                          ? "Design promotional content to boost sales and engage customers"
-                          : "Create eye-catching banners for effective marketing campaigns",
+                      isUpdating 
+                          ? "Update category information and settings"
+                          : "Organize your products with a new category",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 16,
@@ -172,7 +158,7 @@ class _ModifyPromoState extends State<ModifyPromo> {
               
               const SizedBox(height: 32),
               
-              // Content Details Section
+              // Category Details Section
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -205,7 +191,7 @@ class _ModifyPromoState extends State<ModifyPromo> {
                         ),
                         const SizedBox(width: 12),
                         const Text(
-                          "Content Details",
+                          "Category Information",
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
@@ -216,26 +202,75 @@ class _ModifyPromoState extends State<ModifyPromo> {
                     ),
                     const SizedBox(height: 24),
                     
-                    ModernTextField(
-                      controller: titleController,
-                      label: _isPromo ? "Promotion Title" : "Banner Title",
-                      hint: _isPromo ? "Enter an engaging promotion title" : "Enter an attractive banner title",
-                      prefixIcon: Icons.title,
-                      validator: (v) => v!.isEmpty ? "Title cannot be empty" : null,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFF59E0B)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Color(0xFFF59E0B), size: 20),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "Category names will be automatically converted to lowercase for consistency",
+                              style: TextStyle(
+                                color: Color(0xFF92400E),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     
                     const SizedBox(height: 20),
                     
                     ModernTextField(
                       controller: categoryController,
-                      label: "Target Category",
-                      hint: "Select the category this content targets",
+                      label: "Category Name",
+                      hint: "Enter category name (e.g., Electronics, Fashion)",
                       prefixIcon: Icons.category_outlined,
-                      readOnly: true,
-                      validator: (v) => v!.isEmpty ? "Category cannot be empty" : null,
-                      onTap: () {
-                        _showCategorySelector();
-                      },
+                      validator: (v) => v!.isEmpty ? "Category name cannot be empty" : null,
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFDF7),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF059669)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.sort, color: Color(0xFF059669), size: 20),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "Priority determines the display order. Higher numbers appear first",
+                              style: TextStyle(
+                                color: Color(0xFF065F46),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    ModernTextField(
+                      controller: priorityController,
+                      label: "Display Priority",
+                      hint: "Enter priority number (1-100)",
+                      prefixIcon: Icons.sort,
+                      keyboardType: TextInputType.number,
+                      validator: (v) => v!.isEmpty ? "Priority cannot be empty" : null,
                     ),
                   ],
                 ),
@@ -276,7 +311,7 @@ class _ModifyPromoState extends State<ModifyPromo> {
                         ),
                         const SizedBox(width: 12),
                         const Text(
-                          "Visual Content",
+                          "Category Image",
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
@@ -291,7 +326,7 @@ class _ModifyPromoState extends State<ModifyPromo> {
                     if (image != null || imageController.text.isNotEmpty)
                       Container(
                         width: double.infinity,
-                        height: 220,
+                        height: 200,
                         margin: const EdgeInsets.only(bottom: 20),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
@@ -427,13 +462,11 @@ class _ModifyPromoState extends State<ModifyPromo> {
               
               // Action Button
               ModernButton(
-                text: productId.isNotEmpty
-                    ? _isPromo ? "Update Promotion" : "Update Banner"
-                    : _isPromo ? "Create Promotion" : "Create Banner",
+                text: isUpdating ? "Update Category" : "Create Category",
                 width: double.infinity,
                 height: 56,
                 onPressed: _handleSubmit,
-                icon: productId.isNotEmpty ? Icons.update : Icons.add,
+                icon: isUpdating ? Icons.update : Icons.add,
               ),
               
               const SizedBox(height: 20),
@@ -444,164 +477,27 @@ class _ModifyPromoState extends State<ModifyPromo> {
     );
   }
 
-  void _showCategorySelector() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.category_outlined,
-                      color: Color(0xFF6366F1),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    "Select Category",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.grey[100],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Consumer<AdminProvider>(
-                builder: (context, value, child) => ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: value.categories.length,
-                  itemBuilder: (context, index) {
-                    final category = value.categories[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ListTile(
-                        onTap: () {
-                          categoryController.text = category["name"];
-                          setState(() {});
-                          Navigator.pop(context);
-                        },
-                        contentPadding: const EdgeInsets.all(16),
-                        leading: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.category_outlined,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        title: Text(
-                          category["name"].toString().toUpperCase(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                        trailing: const Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _handleSubmit() {
+  void _handleSubmit() async {
     if (formKey.currentState!.validate()) {
       Map<String, dynamic> data = {
-        "title": titleController.text,
-        "category": categoryController.text,
+        "name": categoryController.text.toLowerCase(),
         "image": imageController.text,
+        "priority": int.parse(priorityController.text),
       };
 
-      if (productId.isNotEmpty) {
-        DbService().updatePromos(
-          id: productId,
+      if (isUpdating) {
+        await DbService().updateCategories(
+          docId: categoryId,
           data: data,
-          isPromo: _isPromo,
         );
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
+            content: const Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
-                Text("${_isPromo ? "Promotion" : "Banner"} updated successfully!"),
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text("Category updated successfully!"),
               ],
             ),
             backgroundColor: Colors.green,
@@ -612,18 +508,15 @@ class _ModifyPromoState extends State<ModifyPromo> {
           ),
         );
       } else {
-        DbService().createPromos(
-          data: data,
-          isPromo: _isPromo,
-        );
+        await DbService().createCategories(data: data);
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
+            content: const Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
-                Text("${_isPromo ? "Promotion" : "Banner"} created successfully!"),
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text("Category created successfully!"),
               ],
             ),
             backgroundColor: Colors.green,
