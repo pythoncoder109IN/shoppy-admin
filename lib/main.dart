@@ -123,6 +123,7 @@ class MyApp extends StatelessWidget {
           "/coupons": (context) => CouponsPage(),
           "/orders": (context) => OrdersPage(),
           "/view_order": (context) => ViewOrder(),
+          "/add_category": (context) => CategoriesPage(),
         },
       ),
     );
