@@ -136,10 +136,15 @@ class _CategoriesPageState extends State<CategoriesPage> {
                     icon: const Icon(Icons.more_vert, color: Color(0xFF64748B)),
                     onSelected: (value) {
                       if (value == 'edit') {
-                        Navigator.pushNamed(
-                          context,
-                          "/add_category",
-                          arguments: categories[index],
+                        showDialog(
+                          context: context,
+                          builder: (context) => ModifyCategory(
+                            isUpdating: true,
+                            categoryId: categories[index].id,
+                            priority: categories[index].priority,
+                            image: categories[index].image,
+                            name: categories[index].name,
+                          ),
                         );
                       } else if (value == 'delete') {
                         showDialog(
@@ -190,7 +195,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.pushNamed(context, "/add_category");
+          showDialog(
+            context: context,
+            builder: (context) =>
+                ModifyCategory(isUpdating: false, categoryId: "", priority: 0),
+          );
         },
         child: const Icon(Icons.add),
       ),
@@ -198,3 +207,199 @@ class _CategoriesPageState extends State<CategoriesPage> {
   }
 }
 
+class ModifyCategory extends StatefulWidget {
+  final bool isUpdating;
+  final String? name;
+  final String categoryId;
+  final String? image;
+  final int priority;
+  const ModifyCategory({
+    super.key,
+    required this.isUpdating,
+    this.name,
+    required this.categoryId,
+    this.image,
+    required this.priority,
+  });
+
+  @override
+  State<ModifyCategory> createState() => _ModifyCategoryState();
+}
+
+class _ModifyCategoryState extends State<ModifyCategory> {
+  final formKey = GlobalKey<FormState>();
+  final ImagePicker picker = ImagePicker();
+  late XFile? image = null;
+  TextEditingController categoryController = TextEditingController();
+  TextEditingController imageController = TextEditingController();
+  TextEditingController priorityController = TextEditingController();
+
+  @override
+  void initState() {
+    if (widget.isUpdating && widget.name != null) {
+      categoryController.text = widget.name!;
+      imageController.text = widget.image!;
+      priorityController.text = widget.priority.toString();
+    }
+    super.initState();
+  }
+
+  // NEW : upload to cloudinary
+  void _pickImageAndCloudinaryUpload() async {
+    image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      String? res = await uploadToCloudinary(image);
+      setState(() {
+        if (res != null) {
+          imageController.text = res;
+          print("set image url ${res} : ${imageController.text}");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Image uploaded successfully")),
+          );
+        }
+      });
+    }
+  }
+
+  // OLD : upload to firebase
+  // function to pick image using image picker
+  // Future<void> pickImage() async {
+  //   image = await picker.pickImage(source: ImageSource.gallery);
+  //   if (image != null) {
+  //     String? res = await StorageService().uploadImage(image!.path, context);
+  //     setState(() {
+  //       if (res != null) {
+  //         imageController.text = res;
+  //         print("set image url ${res} : ${imageController.text}");
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //             const SnackBar(content: Text("Image uploaded successfully")));
+  //       }
+  //     });
+  //   }
+  // }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.isUpdating ? "Update Category" : "Add Category"),
+      content: SingleChildScrollView(
+        child: Form(
+          key: formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("All will be converted to lowercase"),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: categoryController,
+                validator: (v) => v!.isEmpty ? "This cant be empty." : null,
+                decoration: InputDecoration(
+                  hintText: "Category Name",
+                  label: Text("Category Name"),
+                  fillColor: Colors.deepPurple.shade50,
+                  filled: true,
+                ),
+              ),
+              SizedBox(height: 10),
+              Text("This will be used in ordering categories"),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: priorityController,
+                validator: (v) => v!.isEmpty ? "This cant be empty." : null,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: "Priority",
+                  label: Text("Priority"),
+                  fillColor: Colors.deepPurple.shade50,
+                  filled: true,
+                ),
+              ),
+              SizedBox(height: 10),
+              image == null
+                  ? imageController.text.isNotEmpty
+                        ? Container(
+                            margin: EdgeInsets.all(20),
+                            height: 100,
+                            width: double.infinity,
+                            color: Colors.deepPurple.shade50,
+                            child: Image.network(
+                              imageController.text,
+                              fit: BoxFit.contain,
+                            ),
+                          )
+                        : SizedBox()
+                  : Container(
+                      margin: EdgeInsets.all(20),
+                      height: 200,
+                      width: double.infinity,
+                      color: Colors.deepPurple.shade50,
+                      child: Image.file(File(image!.path), fit: BoxFit.contain),
+                    ),
+              ElevatedButton(
+                onPressed: () {
+                  // OLD one for firebase storage upload
+                  // pickImage();
+                  // NEW for cloudinary Upload
+                  _pickImageAndCloudinaryUpload();
+                },
+                child: Text("Pick Image"),
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: imageController,
+                validator: (v) => v!.isEmpty ? "This cant be empty." : null,
+                decoration: InputDecoration(
+                  hintText: "Image Link",
+                  label: Text("Image Link"),
+                  fillColor: Colors.deepPurple.shade50,
+                  filled: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: () async {
+            if (formKey.currentState!.validate()) {
+              if (widget.isUpdating) {
+                await DbService().updateCategories(
+                  docId: widget.categoryId,
+                  data: {
+                    "name": categoryController.text.toLowerCase(),
+                    "image": imageController.text,
+                    "priority": int.parse(priorityController.text),
+                  },
+                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Category Updated")));
+              } else {
+                await DbService().createCategories(
+                  data: {
+                    "name": categoryController.text.toLowerCase(),
+                    "image": imageController.text,
+                    "priority": int.parse(priorityController.text),
+                  },
+                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Category Added")));
+              }
+              Navigator.pop(context);
+            }
+          },
+          child: Text(widget.isUpdating ? "Update" : "Add"),
+        ),
+      ],
+    );
+  }
+}

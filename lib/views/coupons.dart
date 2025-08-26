@@ -363,3 +363,264 @@ class _CouponsPageState extends State<CouponsPage> {
     );
   }
 }
+
+class ModifyCoupon extends StatefulWidget {
+  final String id, code, desc;
+  final int discount;
+  const ModifyCoupon({
+    super.key,
+    required this.id,
+    required this.code,
+    required this.desc,
+    required this.discount,
+  });
+
+  @override
+  State<ModifyCoupon> createState() => _ModifyCouponState();
+}
+
+class _ModifyCouponState extends State<ModifyCoupon> {
+  final formKey = GlobalKey<FormState>();
+  TextEditingController descController = TextEditingController();
+  TextEditingController codeController = TextEditingController();
+  TextEditingController disPercentController = TextEditingController();
+
+  @override
+  void initState() {
+    descController.text = widget.desc;
+    codeController.text = widget.code;
+    disPercentController.text = widget.discount.toString();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 500),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFEC4899), Color(0xFFF97316)],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.confirmation_number,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.id.isNotEmpty ? "Edit Coupon" : "Create Coupon",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.id.isNotEmpty 
+                          ? "Update coupon details"
+                          : "Create a new discount coupon",
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Form Content
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFF59E0B)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Color(0xFFF59E0B), size: 20),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Coupon codes will be automatically converted to uppercase",
+                                style: TextStyle(
+                                  color: Color(0xFF92400E),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      ModernTextField(
+                        controller: codeController,
+                        label: "Coupon Code",
+                        hint: "Enter coupon code (e.g., SAVE20)",
+                        prefixIcon: Icons.confirmation_number_outlined,
+                        validator: (v) => v!.isEmpty ? "Coupon code cannot be empty" : null,
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      ModernTextField(
+                        controller: descController,
+                        label: "Description",
+                        hint: "Describe what this coupon offers",
+                        prefixIcon: Icons.description_outlined,
+                        maxLines: 3,
+                        validator: (v) => v!.isEmpty ? "Description cannot be empty" : null,
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      ModernTextField(
+                        controller: disPercentController,
+                        label: "Discount Percentage",
+                        hint: "Enter discount percentage (1-100)",
+                        prefixIcon: Icons.percent,
+                        keyboardType: TextInputType.number,
+                        validator: (v) {
+                          if (v!.isEmpty) return "Discount percentage cannot be empty";
+                          final discount = int.tryParse(v);
+                          if (discount == null || discount < 1 || discount > 100) {
+                            return "Please enter a valid percentage (1-100)";
+                          }
+                          return null;
+                        },
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                "Cancel",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ModernButton(
+                              text: widget.id.isNotEmpty ? "Update Coupon" : "Create Coupon",
+                              onPressed: _handleSubmit,
+                              backgroundColor: const Color(0xFFEC4899),
+                              icon: widget.id.isNotEmpty ? Icons.update : Icons.add,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleSubmit() {
+    if (formKey.currentState!.validate()) {
+      var data = {
+        "code": codeController.text.toUpperCase(),
+        "desc": descController.text,
+        "discount": int.parse(disPercentController.text),
+      };
+
+      if (widget.id.isNotEmpty) {
+        DbService().updateCouponCode(docId: widget.id, data: data);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text("Coupon updated successfully!"),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      } else {
+        DbService().createCouponCode(data: data);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text("Coupon created successfully!"),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+      Navigator.pop(context);
+    }
+  }
+}

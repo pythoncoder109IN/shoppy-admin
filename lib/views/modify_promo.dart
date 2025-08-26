@@ -2,6 +2,9 @@ import 'dart:io';
 
 import 'package:ecommerce_admin_app/controllers/cloudinary_service.dart';
 import 'package:ecommerce_admin_app/controllers/db_service.dart';
+import 'package:ecommerce_admin_app/controllers/storage_service.dart';
+import 'package:ecommerce_admin_app/models/products_model.dart';
+import 'package:ecommerce_admin_app/models/promo_banners_model.dart';
 import 'package:ecommerce_admin_app/providers/admin_provider.dart';
 import 'package:ecommerce_admin_app/widgets/modern_button.dart';
 import 'package:ecommerce_admin_app/widgets/modern_text_field.dart';
@@ -36,8 +39,8 @@ class _ModifyPromoState extends State<ModifyPromo> {
       if (!_isInitialized) {
         final arguments = ModalRoute.of(context)?.settings.arguments;
         if (arguments != null && arguments is Map<String, dynamic>) {
-          if (arguments["detail"] != null) {
-            setData(arguments["detail"]);
+          if (arguments["detail"] is PromoBannersModel) {
+            setData(arguments["detail"] as PromoBannersModel);
           }
           _isPromo = arguments['promo'] ?? true;
         }
@@ -79,7 +82,7 @@ class _ModifyPromoState extends State<ModifyPromo> {
     }
   }
 
-  setData(dynamic data) {
+  setData(PromoBannersModel data) {
     productId = data.id;
     titleController.text = data.title;
     categoryController.text = data.category;
@@ -99,10 +102,9 @@ class _ModifyPromoState extends State<ModifyPromo> {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: formKey,
           child: Column(
@@ -111,7 +113,7 @@ class _ModifyPromoState extends State<ModifyPromo> {
               // Header Card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -121,70 +123,7 @@ class _ModifyPromoState extends State<ModifyPromo> {
                       _isPromo ? const Color(0xFF8B5CF6) : const Color(0xFF10B981),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_isPromo ? const Color(0xFF6366F1) : const Color(0xFF059669)).withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        _isPromo ? Icons.local_offer : Icons.image,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      productId.isNotEmpty ? "Edit Content" : "Create New Content",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _isPromo 
-                          ? "Design promotional content to boost sales and engage customers"
-                          : "Create eye-catching banners for effective marketing campaigns",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 16,
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Content Details Section
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,34 +131,82 @@ class _ModifyPromoState extends State<ModifyPromo> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6366F1).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
-                            Icons.edit_note,
-                            color: Color(0xFF6366F1),
-                            size: 20,
+                          child: Icon(
+                            _isPromo ? Icons.local_offer : Icons.image,
+                            color: Colors.white,
+                            size: 24,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          "Content Details",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                productId.isNotEmpty ? "Edit Content" : "Create New Content",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _isPromo 
+                                    ? "Design promotional content to boost sales"
+                                    : "Create eye-catching banners for marketing",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Form Section
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Content Details",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     
                     ModernTextField(
                       controller: titleController,
                       label: _isPromo ? "Promotion Title" : "Banner Title",
-                      hint: _isPromo ? "Enter an engaging promotion title" : "Enter an attractive banner title",
+                      hint: _isPromo ? "Enter promotion title" : "Enter banner title",
                       prefixIcon: Icons.title,
                       validator: (v) => v!.isEmpty ? "Title cannot be empty" : null,
                     ),
@@ -228,8 +215,8 @@ class _ModifyPromoState extends State<ModifyPromo> {
                     
                     ModernTextField(
                       controller: categoryController,
-                      label: "Target Category",
-                      hint: "Select the category this content targets",
+                      label: "Category",
+                      hint: "Select category",
                       prefixIcon: Icons.category_outlined,
                       readOnly: true,
                       validator: (v) => v!.isEmpty ? "Category cannot be empty" : null,
@@ -241,64 +228,47 @@ class _ModifyPromoState extends State<ModifyPromo> {
                 ),
               ),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               
-              // Image Upload Section
+              // Image Section
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF059669).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.image,
-                            color: Color(0xFF059669),
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          "Visual Content",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      "Image Upload",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     
                     // Image Preview
                     if (image != null || imageController.text.isNotEmpty)
                       Container(
                         width: double.infinity,
-                        height: 220,
-                        margin: const EdgeInsets.only(bottom: 20),
+                        height: 200,
+                        margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                           child: image != null
                               ? Image.file(
                                   File(image!.path),
@@ -311,20 +281,10 @@ class _ModifyPromoState extends State<ModifyPromo> {
                                     return Container(
                                       color: Colors.grey[100],
                                       child: const Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.broken_image_outlined,
-                                              size: 48,
-                                              color: Colors.grey,
-                                            ),
-                                            SizedBox(height: 8),
-                                            Text(
-                                              "Failed to load image",
-                                              style: TextStyle(color: Colors.grey),
-                                            ),
-                                          ],
+                                        child: Icon(
+                                          Icons.broken_image_outlined,
+                                          size: 48,
+                                          color: Colors.grey,
                                         ),
                                       ),
                                     );
@@ -333,84 +293,60 @@ class _ModifyPromoState extends State<ModifyPromo> {
                         ),
                       ),
                     
-                    // Upload Area
+                    // Upload Button
                     Container(
                       width: double.infinity,
-                      height: 140,
+                      height: 120,
                       decoration: BoxDecoration(
                         border: Border.all(
                           color: const Color(0xFF6366F1).withOpacity(0.3),
                           style: BorderStyle.solid,
                           width: 2,
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         color: const Color(0xFF6366F1).withOpacity(0.05),
                       ),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: _isUploading ? null : _pickImageAndCloudinaryUpload,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               if (_isUploading)
-                                const Column(
-                                  children: [
-                                    CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
-                                    ),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      "Uploading your image...",
-                                      style: TextStyle(
-                                        color: Color(0xFF6366F1),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
+                                const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
                                 )
                               else
-                                Column(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF6366F1).withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Icon(
-                                        Icons.cloud_upload_outlined,
-                                        size: 32,
-                                        color: Color(0xFF6366F1),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    const Text(
-                                      "Tap to upload image",
-                                      style: TextStyle(
-                                        color: Color(0xFF6366F1),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      "JPG, PNG up to 10MB",
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
+                                const Icon(
+                                  Icons.cloud_upload_outlined,
+                                  size: 32,
+                                  color: Color(0xFF6366F1),
                                 ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _isUploading ? "Uploading..." : "Tap to upload image",
+                                style: const TextStyle(
+                                  color: Color(0xFF6366F1),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "JPG, PNG up to 10MB",
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ),
                     ),
                     
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     
                     ModernTextField(
                       controller: imageController,
@@ -423,7 +359,7 @@ class _ModifyPromoState extends State<ModifyPromo> {
                 ),
               ),
               
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
               
               // Action Button
               ModernButton(
@@ -435,8 +371,6 @@ class _ModifyPromoState extends State<ModifyPromo> {
                 onPressed: _handleSubmit,
                 icon: productId.isNotEmpty ? Icons.update : Icons.add,
               ),
-              
-              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -450,29 +384,18 @@ class _ModifyPromoState extends State<ModifyPromo> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: MediaQuery.of(context).size.height * 0.6,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            
-            Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(color: Color(0xFFE2E8F0)),
@@ -480,24 +403,11 @@ class _ModifyPromoState extends State<ModifyPromo> {
               ),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.category_outlined,
-                      color: Color(0xFF6366F1),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   const Text(
                     "Select Category",
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                       color: Color(0xFF1E293B),
                     ),
                   ),
@@ -505,9 +415,6 @@ class _ModifyPromoState extends State<ModifyPromo> {
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.grey[100],
-                    ),
                   ),
                 ],
               ),
@@ -515,23 +422,15 @@ class _ModifyPromoState extends State<ModifyPromo> {
             Expanded(
               child: Consumer<AdminProvider>(
                 builder: (context, value, child) => ListView.builder(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   itemCount: value.categories.length,
                   itemBuilder: (context, index) {
                     final category = value.categories[index];
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.02),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListTile(
                         onTap: () {
@@ -539,35 +438,26 @@ class _ModifyPromoState extends State<ModifyPromo> {
                           setState(() {});
                           Navigator.pop(context);
                         },
-                        contentPadding: const EdgeInsets.all(16),
                         leading: Container(
-                          width: 48,
-                          height: 48,
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
+                            color: const Color(0xFF6366F1).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
                             Icons.category_outlined,
-                            color: Colors.white,
-                            size: 24,
+                            color: Color(0xFF6366F1),
+                            size: 20,
                           ),
                         ),
                         title: Text(
                           category["name"].toString().toUpperCase(),
                           style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Color(0xFF1E293B),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        trailing: const Icon(
-                          Icons.arrow_forward_ios,
-                          size: 16,
-                          color: Color(0xFF64748B),
-                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       ),
                     );
                   },
